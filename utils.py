@@ -15,7 +15,7 @@ assert tf.__version__.startswith('2')
 FLAGS = flags.FLAGS
 
 def transformer_flags():
-    flags.DEFINE_string('dataset_path','/data/asadul/scribendiData/tsvFiles2019/data_small/',' Dataset Folder')
+    flags.DEFINE_string('dataset_path','PATH/TO/DATASET',' Dataset Folder')
     flags.DEFINE_integer('buffer_size', 100000, 'Shuffle buffer size')
     flags.DEFINE_string('vocab_file','vocab.txt','Vocabulary file')
     flags.DEFINE_integer('sequence_length', 50, 'Maxinum number of words in a sequence')

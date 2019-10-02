@@ -23,7 +23,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('num_gpu', 4, 'Number of GPUs to use')
 
 class DistributedTrain(Train):
-    def __init__(self, epochs, enable_function, transformer, tokenizer,
+    def __init__(self, epochs, enable_function, transformer, src_tokenizer, tgt_tokenizer
                 batch_size, per_replica_batch_size, train_log_dir, test_log_dir,
                 max_ckpt_keep, ckpt_path,d_model):
         """ Train class
@@ -32,7 +32,8 @@ class DistributedTrain(Train):
             epochs: Number of Epochs
             enable_function: Decorate function with tf.function
             transformer: Transformer
-            tokenizer: Input/output Tokenizer
+            src_tokenizer: source tokenizer
+            tgt_tokenizer: target tokenizer
             batch_size: Batch size
             train_log_dir: Training log directory
             test_log_dir: Test Log directory
@@ -41,8 +42,8 @@ class DistributedTrain(Train):
             d_model: Output dimesion of all sublayers including Embedding layer 
 
         """
-        Train.__init__(self, epochs, enable_function, transformer, tokenizer,
-                batch_size,  train_log_dir, test_log_dir,
+        Train.__init__(self, epochs, enable_function, transformer, src_tokenizer,
+                tgt_tokenizer, batch_size,  train_log_dir, test_log_dir,
                 max_ckpt_keep, ckpt_path,d_model)
     
    
@@ -138,9 +139,10 @@ def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_hea
     num_replicas = strategy.num_replicas_in_sync
     
     with strategy.scope():
-        train_dataset, test_dataset, tokenizer = utils.load_dataset(dataset_path, 
+        train_dataset, test_dataset, src_tokenizer, tgt_tokenizer = utils.load_dataset(dataset_path, 
                                     sequence_length,vocab_file, batch_size, buffer_size)
-        input_vocab_size = target_vocab_size = tokenizer.vocab_size + 2
+        input_vocab_size  = src_tokenizer.vocab_size + 2
+        target_vocab_size = tgt_tokenizer.vocab_size + 2
         #pdb.set_trace()        
         #num_train_steps_per_epoch = len(list(train_dataset))#tf.data.experimental.cardinality(train_dataset)
         #num_test_steps_per_epoch = len(list(test_dataset))#tf.data.experimental.cardinality(test_dataset)
@@ -159,8 +161,8 @@ def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_hea
                             input_vocab_size, target_vocab_size, dropout_rate)
         
         print('create training object')
-        train_obj=DistributedTrain(epochs, enable_function, transformer, tokenizer,
-            batch_size, local_batch_size, train_log_dir, test_log_dir,
+        train_obj=DistributedTrain(epochs, enable_function, transformer, src_tokenizer,
+            tgt_tokenizer, batch_size, local_batch_size, train_log_dir, test_log_dir,
             max_ckpt_keep, ckpt_path,d_model)
         print('Training.....')
         

@@ -15,7 +15,7 @@ assert tf.__version__.startswith('2')
 FLAGS = flags.FLAGS
 
 def transformer_flags():
-    flags.DEFINE_string('dataset_path','/data/asadul/scribendiData/tsvFiles2019/data_small/',' Dataset Folder')
+    flags.DEFINE_string('dataset_path','PATH/TO/DATASET',' Dataset Folder')
     flags.DEFINE_integer('buffer_size', 100000, 'Shuffle buffer size')
     flags.DEFINE_string('vocab_file','vocab.txt','Vocabulary file')
     flags.DEFINE_integer('sequence_length', 50, 'Maxinum number of words in a sequence')
@@ -78,26 +78,35 @@ def read_data(src_file, tgt_file):
     return src_tgt_dataset
 
 
-def _load_or_create_tokenier(dataset, vocab_file):
+def _load_or_create_tokenier(dataset, src_vocab_file, tgt_vocab_file):
     """Create tokeinizer if doen't exists
 
     Args:
         dataset: Training dataset to create the vocab file
-        vocab_file: Path where to save vocab files
+        src_vocab_file: Path where to save source vocab file
+        tgt_vocab_file: Path where to save target vocab file
     
     Returns: 
-        tokenizer: Tokenizer
+        src_tokenizer: Source Tokenizer
+        tgt_tokenizer: Target Tokenizer
     """
 
-    if tf.io.gfile.exists(vocab_file+'.subwords')==False:
-        tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
+    if tf.io.gfile.exists(src_vocab_file+'.subwords')==False and \
+        tf.io.gfile.exists(tgt_vocab_file+'.subwords')==False:
+        src_tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
             (src.numpy() for src,tgt in dataset), target_vocab_size=2**15)
-        tokenizer.save_to_file(vocab_file)
+        src_tokenizer.save_to_file(src_vocab_file)
+        
+        tgt_tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
+            (tgt.numpy() for src,tgt in dataset), target_vocab_size=2**15)
+        tgt_tokenizer.save_to_file(tgt_vocab_file)
     else:
         print("Vocabulary exists Loading...")
-        tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(
-            vocab_file)
-    return tokenizer
+        src_tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(
+            src_vocab_file)
+        tgt_tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(
+            tgt_vocab_file)
+    return src_tokenizer, tgt_tokenizer
 
 
 def load_dataset(dataset_path, sequence_length, vocab_file, batch_size, buffer_size):
@@ -121,14 +130,14 @@ def load_dataset(dataset_path, sequence_length, vocab_file, batch_size, buffer_s
     test_dataset = read_data(dataset_path+'test.src', 
                             dataset_path+'test.tgt')
 
-    tokenizer = _load_or_create_tokenier(train_dataset, vocab_file)
+    src_tokenizer, tgt_tokenizer = _load_or_create_tokenier(train_dataset, vocab_file)
     
     def encode(src, tgt):
-        src = [tokenizer.vocab_size] + tokenizer.encode(
-            src.numpy()) + [tokenizer.vocab_size+1]
+        src = [src_tokenizer.vocab_size] + src_tokenizer.encode(
+            src.numpy()) + [src.tokenizer.vocab_size+1]
 
-        tgt = [tokenizer.vocab_size] + tokenizer.encode(
-            tgt.numpy()) + [tokenizer.vocab_size+1]
+        tgt = [tgt_tokenizer.vocab_size] + tgt_tokenizer.encode(
+            tgt.numpy()) + [tgt_tokenizer.vocab_size+1]
         return src, tgt
 
     def filter_max_length(x, y, max_length=sequence_length):
@@ -147,4 +156,4 @@ def load_dataset(dataset_path, sequence_length, vocab_file, batch_size, buffer_s
     test_dataset = test_dataset.padded_batch(
         batch_size, padded_shapes=([-1],[-1]))
 
-    return train_dataset, test_dataset, tokenizer
+    return train_dataset, test_dataset, src_tokenizer,tgt_tokenizer

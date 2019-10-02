@@ -41,7 +41,8 @@ class Train(object):
         epochs: Number of Epochs
         enable_function: Decorate function with tf.function
         transformer: Transformer
-        tokenizer: Input/output Tokenizer
+        src_tokenizer: Source Tokenizer
+        tgt_tokenizer: target Tokenizer
         batch_size: Batch size
         train_log_dir: Training log directory
         test_log_dir: Test Log directory
@@ -51,13 +52,14 @@ class Train(object):
 
     """
 
-    def __init__(self, epochs, enable_function, transformer, tokenizer,
+    def __init__(self, epochs, enable_function, transformer, src_tokenizer, tgt_tokenizer,
                 batch_size,  train_log_dir, test_log_dir,
                 max_ckpt_keep, ckpt_path, d_model):
         self.epochs = epochs
         self.enable_function = enable_function
         self.transformer = transformer
-        self.tokenizer = tokenizer
+        self.src_tokenizer = src_tokenizer
+        self.tgt_tokenizer = tgt_tokenizer
         self.batch_size = batch_size
         self.learning_rate =  CustomSchedule(d_model)
         self.optimizer = tf.keras.optimizers.Adam(self.learning_rate, beta_1=0.9, beta_2=0.98, 
@@ -95,11 +97,11 @@ class Train(object):
         Return:
             result: predicted result of the input sentence
         """
-        start_token =[self.tokenizer.vocab_size]
-        end_token =[self.tokenizer.vocab_size+1]
+        start_token =[self.src_tokenizer.vocab_size]
+        end_token =[self.src_tokenizer.vocab_size+1]
         print(input_sentence)
         input_sentence= input_sentence[0]
-        input_sentence = start_token + self.tokenizer.encode(input_sentence) + end_token
+        input_sentence = start_token + self.src_tokenizer.encode(input_sentence) + end_token
         encoder_input = tf.cast(tf.expand_dims(input_sentence,0),tf.int64)
         output = tf.cast(tf.expand_dims(start_token, 0),tf.int64)
         result=''
@@ -224,15 +226,16 @@ def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_hea
     train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
     test_log_dir = 'logs/gradient_tape/' + current_time + '/test'
 
-    train_dataset, test_dataset, tokenizer = utils.load_dataset(dataset_path, 
+    train_dataset, test_dataset, src_tokenizer, tgt_tokenizer = utils.load_dataset(dataset_path, 
                                 sequence_length,vocab_file, batch_size, buffer_size)
-    input_vocab_size = target_vocab_size = tokenizer.vocab_size + 2
+    input_vocab_size = src_tokenizer.vocab_size + 2
+    target_vocab_size = tgt_tokenizer.vocab_size + 2
     transformer = Transformer(num_layers, d_model, num_heads, dff,
                           input_vocab_size, target_vocab_size, dropout_rate)
     
     print('create training object')
-    train_obj=Train(epochs, enable_function, transformer, tokenizer,
-            batch_size, train_log_dir, test_log_dir,
+    train_obj=Train(epochs, enable_function, transformer, src_tokenizer,
+            tgt_tokenizer, batch_size, train_log_dir, test_log_dir,
             max_ckpt_keep, ckpt_path,d_model)
     
     train_obj.training_loop(train_dataset,test_dataset)

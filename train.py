@@ -219,15 +219,15 @@ def run_main(argv):
     main(**kwargs)
 
 
-def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_heads, vocab_file,
-        dataset_path,dropout_rate, num_layers,sequence_length,ckpt_path, max_ckpt_keep):
+def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_heads, src_vocab_file,
+        tgt_vocab_file, dataset_path,dropout_rate, num_layers,sequence_length,ckpt_path, max_ckpt_keep):
 
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
     test_log_dir = 'logs/gradient_tape/' + current_time + '/test'
 
     train_dataset, test_dataset, src_tokenizer, tgt_tokenizer = utils.load_dataset(dataset_path, 
-                                sequence_length,vocab_file, batch_size, buffer_size)
+                                sequence_length,src_vocab_file, tgt_vocab_file, batch_size, buffer_size)
     input_vocab_size = src_tokenizer.vocab_size + 2
     target_vocab_size = tgt_tokenizer.vocab_size + 2
     transformer = Transformer(num_layers, d_model, num_heads, dff,

@@ -23,7 +23,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_integer('num_gpu', 4, 'Number of GPUs to use')
 
 class DistributedTrain(Train):
-    def __init__(self, epochs, enable_function, transformer, src_tokenizer, tgt_tokenizer
+    def __init__(self, epochs, enable_function, transformer, src_tokenizer, tgt_tokenizer,
                 batch_size, per_replica_batch_size, train_log_dir, test_log_dir,
                 max_ckpt_keep, ckpt_path,d_model):
         """ Train class
@@ -128,7 +128,7 @@ def run_main(argv):
     main(**kwargs)
 
 
-def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_heads, vocab_file,
+def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_heads, src_vocab_file, tgt_vocab_file,
         dataset_path,dropout_rate, num_layers,sequence_length, per_replica_batch_size,ckpt_path, max_ckpt_keep, num_gpu=1):
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
@@ -140,7 +140,7 @@ def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_hea
     
     with strategy.scope():
         train_dataset, test_dataset, src_tokenizer, tgt_tokenizer = utils.load_dataset(dataset_path, 
-                                    sequence_length,vocab_file, batch_size, buffer_size)
+                                    sequence_length,src_vocab_file, tgt_vocab_file, batch_size, buffer_size)
         input_vocab_size  = src_tokenizer.vocab_size + 2
         target_vocab_size = tgt_tokenizer.vocab_size + 2
         #pdb.set_trace()        

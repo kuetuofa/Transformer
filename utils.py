@@ -15,13 +15,14 @@ assert tf.__version__.startswith('2')
 FLAGS = flags.FLAGS
 
 def transformer_flags():
-    flags.DEFINE_string('dataset_path','PATH/TO/DATASET',' Dataset Folder')
+    flags.DEFINE_string('dataset_path','data/',' Dataset Folder')
     flags.DEFINE_integer('buffer_size', 100000, 'Shuffle buffer size')
-    flags.DEFINE_string('vocab_file','vocab.txt','Vocabulary file')
+    flags.DEFINE_string('src_vocab_file','src_vocab.txt','Source Vocabulary file')
+    flags.DEFINE_string('tgt_vocab_file','tgt_vocab.txt','Target Vocabulary file')
     flags.DEFINE_integer('sequence_length', 50, 'Maxinum number of words in a sequence')
     flags.DEFINE_integer('epochs', 10, 'Number of Epochs')
-    flags.DEFINE_integer('batch_size', 256, 'Batch Size')
-    flags.DEFINE_integer('per_replica_batch_size', 64, 'Batch Size')
+    flags.DEFINE_integer('batch_size', 64, 'Batch Size')
+    flags.DEFINE_integer('per_replica_batch_size', 16, 'Batch Size')
     flags.DEFINE_integer('num_layers', 4, 'Nnmber of Encoder/Decoder Stack')
     flags.DEFINE_integer('d_model', 512, 'Output dimesion of all sublayers including Embedding layer')
     flags.DEFINE_integer('dff', 1024, 'Dimetionality of inner layer')
@@ -43,7 +44,8 @@ def flags_dict():
       'dataset_path': FLAGS.dataset_path,
       'enable_function': FLAGS.enable_function,
       'buffer_size': FLAGS.buffer_size,
-      'vocab_file': FLAGS.vocab_file,
+      'src_vocab_file': FLAGS.src_vocab_file,
+      'tgt_vocab_file': FLAGS.tgt_vocab_file,
       'batch_size': FLAGS.batch_size,
       'per_replica_batch_size': FLAGS.per_replica_batch_size,
       'sequence_length': FLAGS.sequence_length,
@@ -109,7 +111,7 @@ def _load_or_create_tokenier(dataset, src_vocab_file, tgt_vocab_file):
     return src_tokenizer, tgt_tokenizer
 
 
-def load_dataset(dataset_path, sequence_length, vocab_file, batch_size, buffer_size):
+def load_dataset(dataset_path, sequence_length, src_vocab_file, tgt_vocab_file, batch_size, buffer_size):
     """Create a tf.data Dataset.
 
     Args:
@@ -125,16 +127,16 @@ def load_dataset(dataset_path, sequence_length, vocab_file, batch_size, buffer_s
         tokenizer: input/output tokenizer
     """
 
-    train_dataset = read_data(dataset_path+'train.src',
-                            dataset_path+'train.tgt')
-    test_dataset = read_data(dataset_path+'test.src', 
-                            dataset_path+'test.tgt')
+    train_dataset = read_data(dataset_path+'src-train.txt',
+                            dataset_path+'tgt-train.txt')
+    test_dataset = read_data(dataset_path+'src-test.txt', 
+                            dataset_path+'tgt-test.txt')
 
-    src_tokenizer, tgt_tokenizer = _load_or_create_tokenier(train_dataset, vocab_file)
+    src_tokenizer, tgt_tokenizer = _load_or_create_tokenier(train_dataset, src_vocab_file, tgt_vocab_file)
     
     def encode(src, tgt):
         src = [src_tokenizer.vocab_size] + src_tokenizer.encode(
-            src.numpy()) + [src.tokenizer.vocab_size+1]
+            src.numpy()) + [src_tokenizer.vocab_size+1]
 
         tgt = [tgt_tokenizer.vocab_size] + tgt_tokenizer.encode(
             tgt.numpy()) + [tgt_tokenizer.vocab_size+1]

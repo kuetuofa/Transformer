@@ -20,7 +20,7 @@ def transformer_flags():
     flags.DEFINE_string('src_vocab_file','src_vocab.txt','Source Vocabulary file')
     flags.DEFINE_string('tgt_vocab_file','tgt_vocab.txt','Target Vocabulary file')
     flags.DEFINE_integer('sequence_length', 50, 'Maxinum number of words in a sequence')
-    flags.DEFINE_integer('epochs', 10, 'Number of Epochs')
+    flags.DEFINE_integer('epochs', 4, 'Number of Epochs')
     flags.DEFINE_integer('batch_size', 64, 'Batch Size')
     flags.DEFINE_integer('per_replica_batch_size', 16, 'Batch Size')
     flags.DEFINE_integer('num_layers', 4, 'Nnmber of Encoder/Decoder Stack')

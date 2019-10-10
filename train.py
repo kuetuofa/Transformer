@@ -107,7 +107,7 @@ class Train(object):
         result=''
 
         for  i in range(10):
-            predictions, _=self.transformer.call(encoder_input,output,False)
+            predictions, _=self.transformer.call((encoder_input,output),False)
             predictions=predictions[:, -1:, :]
             predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int64)
 
@@ -131,7 +131,7 @@ class Train(object):
         tar_real = tar[:, 1:]
             
         with tf.GradientTape() as tape:
-            predictions, _ = self.transformer(src, tar_inp,training=True )
+            predictions, _ = self.transformer((src, tar_inp),training=True )
             loss = self.loss_function(tar_real, predictions)
             
         gradients = tape.gradient(loss, self.transformer.trainable_variables)    
@@ -149,7 +149,7 @@ class Train(object):
         src, tar = inputs
         tar_inp = tar[:, :-1]
         tar_real = tar[:, 1:]
-        predictions, _=self.transformer(src, tar_inp, training=False)
+        predictions, _=self.transformer((src, tar_inp), training=False)
 
         t_loss = self.loss_function(tar_real, predictions)
         self.test_loss(t_loss)
@@ -216,6 +216,7 @@ class Train(object):
 def run_main(argv):
     del argv
     kwargs= utils.flags_dict()
+    del kwargs['per_replica_batch_size']
     main(**kwargs)
 
 

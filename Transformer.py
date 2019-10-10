@@ -18,7 +18,8 @@ class Transformer(tf.keras.Model):
   #@tf.function(input_signature=[tf.TensorSpec([None,None],tf.int64,name='inp'),
   #                              tf.TensorSpec([None,None],tf.int64,name='out'),
   #                              tf.TensorSpec(None,tf.bool,name='flag')])  
-  def call(self, inp, tar, training=False):
+  def call(self, input_, training=False):
+    inp, tar = input_
     enc_padding_mask, look_ahead_mask, dec_padding_mask = create_masks(inp,tar)
     enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
     

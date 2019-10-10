@@ -169,9 +169,9 @@ def main(epochs, enable_function, buffer_size, batch_size, d_model, dff, num_hea
         train_obj.training_loop(train_iterator,
                                 test_iterator,
                                 strategy )
-        #train_obj.load_ckpt()
-        #print(train_obj.predict(tf.constant(['he goes to school'])))
-        #tf.saved_model.save(train_obj.transformer, 'model')#,signatures=call)
+       # train_obj.load_ckpt()
+        print(train_obj.predict(['he goes to school']))
+        tf.saved_model.save(train_obj.transformer, 'model')#,signatures=call)
 
 
 if __name__=='__main__':
